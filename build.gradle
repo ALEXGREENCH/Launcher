@@ -1,0 +1,190 @@
+buildscript {
+    ext.kotlin_version = '1.6.0'
+    repositories {
+        maven {
+            url 'https://dl.google.com/dl/android/maven2'
+        }
+        //noinspection JcenterRepositoryObsolete
+        jcenter()
+        google()
+        maven { url "https://jitpack.io" }
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.0.4'
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.18'
+        //noinspection DifferentKotlinGradleVersion
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+final String SUPPORT_LIBS_VERSION = '28.0.+'
+
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'com.google.protobuf'
+
+android {
+    compileSdkVersion 28
+    buildToolsVersion '28.0.3'
+
+    defaultConfig {
+        minSdkVersion 21
+        //noinspection ExpiredTargetSdkVersion
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+        applicationId 'com.github.alexgreench'
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        vectorDrawables.useSupportLibrary = true
+    }
+    buildTypes {
+        debug {
+            minifyEnabled false
+        }
+        release {
+            minifyEnabled true
+        }
+    }
+
+    android.applicationVariants.all { variant ->
+        variant.outputs.all {
+            outputFileName = "Launcher.apk"
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    lintOptions {
+        checkReleaseBuilds false
+        // Or, if you prefer, you can continue to check for errors in release builds,
+        // but continue the build even when errors are found:
+        abortOnError false
+    }
+
+    //flavorDimensions "default"
+
+    //productFlavors {
+        //aosp {
+        //    dimension "default"
+        //    applicationId 'sj.shaikjaleel.pixelhome'
+        //    testApplicationId 'sj.shaikjaleel.pixelhome.tests'
+        //}
+
+        //l3go {
+        //    dimension "default"
+        //    applicationId 'sj.shaikjaleel.pixelhome'
+        //    testApplicationId 'sj.shaikjaleel.pixelhome.tests'
+        //}
+//
+        //quickstep {
+        //    dimension "default"
+        //    applicationId 'sj.android.launcher3'
+        //    testApplicationId 'sj.android.launcher3.tests'
+        //}
+    //}
+
+    // Disable release builds for now
+    //android.variantFilter { variant ->
+    //    if (variant.buildType.name.endsWith('release')) {
+    //        variant.setIgnore(true)
+    //    }
+    //}
+
+    sourceSets {
+        main {
+            res.srcDirs = ['res']
+            java.srcDirs = ['src']
+            assets.srcDirs = ['assets']
+            manifest.srcFile 'AndroidManifest-common.xml'
+            proto {
+                srcDir 'protos/'
+                srcDir 'proto_overrides/'
+            }
+        }
+
+        debug {
+            manifest.srcFile "AndroidManifest.xml"
+        }
+
+        release {
+            manifest.srcFile "AndroidManifest.xml"
+        }
+
+        androidTest {
+            res.srcDirs = ['tests/res']
+            java.srcDirs = ['tests/src']
+            manifest.srcFile "tests/AndroidManifest-common.xml"
+        }
+
+        androidTestDebug {
+            manifest.srcFile "tests/AndroidManifest.xml"
+        }
+
+        //aosp {
+        //    java.srcDirs = ['src_flags', "src_ui_overrides"]
+        //}
+
+        //l3go {
+        //    res.srcDirs = ['go/res']
+        //    java.srcDirs = ['go/src_flags', "src_ui_overrides"]
+        //    manifest.srcFile "go/AndroidManifest.xml"
+        //}
+
+        //quickstep {
+        //    res.srcDirs = ['quickstep/res']
+        //    java.srcDirs = ['src_flags', 'quickstep/src']
+        //    manifest.srcFile "quickstep/AndroidManifest.xml"
+        //}
+    }
+}
+
+repositories {
+    //maven { url "../../../prebuilts/fullsdk-darwin/extras/android/m2repository" }
+    //maven { url "../../../prebuilts/fullsdk-linux/extras/android/m2repository" }
+    mavenCentral()
+    google()
+}
+
+dependencies {
+    //implementation fileTree(dir: 'libs', include: ['libGoogleFeed.jar'])
+    implementation "com.android.support:support-v4:${SUPPORT_LIBS_VERSION}"
+    implementation "com.android.support:support-dynamic-animation:${SUPPORT_LIBS_VERSION}"
+    implementation "com.android.support:recyclerview-v7:${SUPPORT_LIBS_VERSION}"
+    implementation 'com.google.protobuf.nano:protobuf-javanano:3.0.0-alpha-7'
+
+    //quickstepImplementation fileTree(dir: "quickstep/libs", include: 'sysui_shared.jar')
+
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation "org.mockito:mockito-core:1.9.5"
+    androidTestImplementation 'com.google.dexmaker:dexmaker:1.2'
+    androidTestImplementation 'com.google.dexmaker:dexmaker-mockito:1.2'
+    androidTestImplementation 'com.android.support.test:runner:1.0.0'
+    androidTestImplementation 'com.android.support.test:rules:1.0.0'
+    androidTestImplementation 'com.android.support.test.uiautomator:uiautomator-v18:2.1.2'
+    androidTestImplementation "com.android.support:support-annotations:${SUPPORT_LIBS_VERSION}"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+}
+
+protobuf {
+    // Configure the protoc executable
+    protoc {
+        artifact = 'com.google.protobuf:protoc:3.0.0-alpha-3'
+
+        generateProtoTasks {
+            all().each { task ->
+                task.builtins {
+                    remove java
+                    javanano {
+                        option "java_package=launcher_log_extension.proto|com.android.launcher3.userevent.nano"
+                        option "java_package=launcher_log.proto|com.android.launcher3.userevent.nano"
+                        option "java_package=launcher_dump.proto|com.android.launcher3.model.nano"
+                        option "enum_style=java"
+                    }
+                }
+            }
+        }
+    }
+}
